@@ -1,5 +1,6 @@
 import gradio as gr
 import gradio.themes
+import os
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Hugging Face Token aus Umgebungsvariable abrufen
