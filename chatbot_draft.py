@@ -7,6 +7,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 token = os.getenv("HF_TOKEN")
 
 # Tokenizer und Modell laden
+model_name = "gpt2"
 tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=token)
 model = AutoModelForCausalLM.from_pretrained(model_name, use_auth_token=token)
 
@@ -18,7 +19,6 @@ forbidden_prompts = [
 
 # Funktion zum Verarbeiten der User-Eingaben
 def chatbot_response(user_input, chat_history):
-    # Exception bei kopierten Texten
     if user_input in forbidden_prompts:
         return chat_history, gr.update(
             value="<div style='background-color: #fdecea; color: #d93025; border: 1px solid #f5c2c7; border-radius: 8px; padding: 10px;'>Nice try, you shouldn't copy and paste the task. Please try using your own words.</div>",
@@ -38,52 +38,51 @@ def chatbot_response(user_input, chat_history):
 # Funktion zum Generieren der HTML-Datei
 def generate_chat_file(prolific_id, task_type, chat_history):
     if not prolific_id or not task_type:
-        return "Error: Please provide a valid Prolific ID and select a task type."
+        return None  # Kein Download-Link zurückgeben, wenn Eingaben fehlen
 
-    # Dateiname basierend auf den Eingaben erstellen
+    # Dateiname erstellen
     filename = f"{prolific_id}_task{task_type.replace(' ', '').lower()}.html"
 
+    # HTML-Inhalt generieren
     html_content = "<html><body><h1>Chat History</h1><ul style='list-style-type: none;'>"
     for message in chat_history:
         if message["role"] == "user":
-            html_content += f"<li style='text-align: right;'><b>{message['content']}</b></li>"
+            html_content += f"<li><b>User:</b> {message['content']}</li>"
         elif message["role"] == "assistant":
-            html_content += f"<li style='text-align: left; color: gray;'>{message['content']}</li>"
+            html_content += f"<li><b>Assistant:</b> {message['content']}</li>"
     html_content += "</ul></body></html>"
 
-    # HTML-Inhalt zurückgeben
+    # Datei speichern
     with open(filename, "w", encoding="utf-8") as file:
         file.write(html_content)
-    return f"File saved as {filename}"
 
-# Gradio UI
+    return filename  # Datei zum Download bereitstellen
+
+# Gradio-UI
 with gr.Blocks(theme=gradio.themes.Citrus()) as demo:
-    # Hauptüberschrift für die gesamte Seite
     gr.Markdown("<h1 style='text-align: center; color: #5b89b0;'>ChatGPT Interface</h1>")
 
-    # Hauptbereich mit Chatbot
     with gr.Row():
         with gr.Column(scale=3):
             gr.Markdown("<h2>ChatGPT</h2>")
-            chat_box = gr.Chatbot(label="GPT-4o", type="messages")  # Verwende type="messages"
+            chat_box = gr.Chatbot(label="GPT-4o", type="messages")
             user_input = gr.Textbox(label="Input", placeholder="Your prompt here...")
             submit_btn = gr.Button("Submit")
-            alert_box = gr.HTML("", visible=False)  # Fehlerfeld als HTML
-        # Sidebar rechts
+            alert_box = gr.HTML("", visible=False)
         with gr.Column(scale=1):
             gr.Markdown("<h2>Save Chat</h2>")
             prolific_id = gr.Textbox(label="Prolific ID", placeholder="Please enter your Prolific ID")
             task_type = gr.Radio(label="Select the task you are working on", choices=["Task 1", "Task 2"], type="value", value=None)
             download_btn = gr.Button("Download Chat History")
-            result_output = gr.Textbox(label="Saving status", interactive=False)
+            file_output = gr.File(label="Downloadable Chat History")
 
     # Zustand für jeden Nutzer (pro Sitzung)
-    state = gr.State([])  # Initial leerer Chatverlauf
+    state = gr.State([])
 
     # Events
     submit_btn.click(chatbot_response, inputs=[user_input, state], outputs=[chat_box, alert_box, user_input])
-    download_btn.click(generate_chat_file, inputs=[prolific_id, task_type, state], outputs=result_output)
+    download_btn.click(generate_chat_file, inputs=[prolific_id, task_type, state], outputs=[file_output])
 
-# Starte die App
+# Start der App
 if __name__ == "__main__":
     demo.launch()
