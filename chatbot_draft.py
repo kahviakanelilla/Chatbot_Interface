@@ -4,6 +4,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Initialisierung des Modells (kostenfreies Hugging Face-Modell wie GPT-2)
 model_name = "gpt2"
+!huggingface-cli login
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(model_name)
 
