@@ -2,11 +2,12 @@ import gradio as gr
 import gradio.themes
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Initialisierung des Modells (kostenfreies Hugging Face-Modell wie GPT-2)
-model_name = "gpt2"
-!huggingface-cli login
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name)
+# Hugging Face Token aus Umgebungsvariable abrufen
+token = os.getenv("HF_TOKEN")
+
+# Tokenizer und Modell laden
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=token)
+model = AutoModelForCausalLM.from_pretrained(model_name, use_auth_token=token)
 
 # Verbotene Prompts (kopierter Text)
 forbidden_prompts = [
