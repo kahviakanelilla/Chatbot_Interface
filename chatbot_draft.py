@@ -84,5 +84,5 @@ with gr.Blocks(theme=gradio.themes.Citrus()) as demo:
     download_btn.click(generate_chat_file, inputs=[prolific_id, task_type, state], outputs=[file_output])
 
 # Start der App
-if __name__ == "__main__":
-    demo.launch()
+i#f __name__ == "__main__":
+#    demo.launch()
