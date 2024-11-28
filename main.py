@@ -1,10 +1,19 @@
 from chat_logic import chatbot_response
 from html_file import generate_chat_file
 from ui_elements import create_ui
+from config import PASSWORD
+import gradio as gr
 
 
 def handle_generate(prolific_id, task_type, chat_history):
     return generate_chat_file(prolific_id, task_type, chat_history)
+
+# Funktion für den Login
+def check_password(input_password):
+    if input_password == PASSWORD:
+        return gr.update(visible=False), gr.update(visible=True)  # Verstecke Login und zeige App
+    else:
+        return "Incorrect password. Please try again.", gr.update(visible=True), gr.update(visible=False)
 
 if __name__ == "__main__":
     demo = create_ui(

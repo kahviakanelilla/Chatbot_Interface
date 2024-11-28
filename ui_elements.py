@@ -3,13 +3,22 @@ import gradio.themes
 from config import MODEL_NAME
 from html_file import generate_chat_file
 from chat_logic import chatbot_response
+from config import PASSWORD
 
 def create_ui(chat_response_fn, generate_file_fn):
     # Gradio-UI
     with gr.Blocks(theme=gradio.themes.Citrus()) as demo:
         gr.Markdown("<h1 style='text-align: center; color: #5b89b0;'>ChatGPT Interface</h1>")
 
-        with gr.Row():
+        # Login
+        with gr.Row(visible=True) as login_section:
+            with gr.Column(scale=1):
+                password_input = gr.Textbox(label="Enter Password", type="password", placeholder="Enter the password here...")
+                login_button = gr.Button("Login")
+                login_error = gr.Textbox(interactive=False, visible=False)
+
+        # Interface
+        with gr.Row(visible=False) as app_section:
             with gr.Column(scale=3):
                 gr.Markdown("<h2>ChatGPT</h2>")
                 chat_box = gr.Chatbot(label=MODEL_NAME, type="messages")
@@ -70,5 +79,18 @@ def create_ui(chat_response_fn, generate_file_fn):
             inputs=[prolific_id, task_type,state],
             outputs=[error_box, download_btn],
             concurrency_limit=None
+        )
+
+          # Login logic
+        def check_password(input_password):
+            if input_password == PASSWORD:
+                return gr.update(visible=False), gr.update(visible=True), ""
+            else:
+                return gr.update(visible=True), gr.update(visible=False), "Incorrect password. Please try again."
+
+        login_button.click(
+            fn=check_password,
+            inputs=password_input,
+            outputs=[login_section, app_section, login_error],
         )
     return demo

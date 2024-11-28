@@ -1,9 +1,8 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from config import HF_TOKEN, MODEL_NAME, FORBIDDEN_PROMPTS
+import openai
+from config import HF_TOKEN, MODEL_NAME, FORBIDDEN_PROMPTS, OPENAI_API_KEY
 
-# Modell und Tokenizer laden
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
-model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, token=HF_TOKEN)
+# Set key
+openai.api_key = OPENAI_API_KEY
 
 def chatbot_response(user_input, chat_history):
     # Function for processing user input
@@ -13,12 +12,24 @@ def chatbot_response(user_input, chat_history):
     if not user_input.strip():  # empty prompt
         return chat_history, "<div style='color:red;'>Error: Prompt cannot be empty.</div>", ""
 
-    # Tokenization and model output
-    inputs = tokenizer(user_input, return_tensors="pt")
-    outputs = model.generate(inputs["input_ids"], max_length=50, num_return_sequences=1)
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # OpenAI API call
+    try:
+        response = openai.ChatCompletion.create(
+            model=MODEL_NAME,
+            messages=chat_history + [{"role": "user", "content": user_input}]
+        )
 
-    # Update chat history
-    chat_history.append({"role": "user", "content": user_input})
-    chat_history.append({"role": "assistant", "content": response})
-    return chat_history, None, ""
+        # Extract the assistant's reply
+        assistant_response = response['choices'][0]['message']['content']
+
+        # Update chat history
+        chat_history.append({"role": "user", "content": user_input})
+        chat_history.append({"role": "assistant", "content": assistant_response})
+
+        return chat_history, None, ""  # Return updated history, no error, and empty user input
+    except openai.error.OpenAIError as e:
+        return (
+            chat_history,
+            f"<div style='color:red;'>Error: {str(e)}</div>",
+            ""
+        )
