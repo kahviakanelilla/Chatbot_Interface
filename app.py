@@ -8,10 +8,10 @@ import gradio as gr
 def handle_generate(prolific_id, task_type, chat_history):
     return generate_chat_file(prolific_id, task_type, chat_history)
 
-# Funktion für den Login
+# Log in function
 def check_password(input_password):
     if input_password == PASSWORD:
-        return gr.update(visible=False), gr.update(visible=True)  # Verstecke Login und zeige App
+        return gr.update(visible=False), gr.update(visible=True)  # hide log in and show interface
     else:
         return "Incorrect password. Please try again.", gr.update(visible=True), gr.update(visible=False)
 
