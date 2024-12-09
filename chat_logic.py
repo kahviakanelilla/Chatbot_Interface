@@ -1,5 +1,5 @@
 import openai
-from config import HF_TOKEN, MODEL_NAME, FORBIDDEN_PROMPTS, OPENAI_API_KEY
+from config import MODEL_NAME, FORBIDDEN_PROMPTS, OPENAI_API_KEY
 
 # Set key
 openai.api_key = OPENAI_API_KEY

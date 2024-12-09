@@ -21,19 +21,21 @@ def create_ui(chat_response_fn, generate_file_fn):
         with gr.Row(visible=False) as app_section:
             with gr.Column(scale=3):
                 gr.Markdown("<h2>ChatGPT</h2>")
+                gr.Markdown("<h3>1. Complete Task</h3>")
                 chat_box = gr.Chatbot(label=MODEL_NAME, type="messages")
                 user_input = gr.Textbox(label="Input", placeholder="Your prompt here...", lines=4, interactive=True)
                 alert_box = gr.HTML("", visible=False)
                 submit_btn = gr.Button("Submit",interactive=False)
             with gr.Column(scale=1):
-                gr.Markdown("<h2>Save Chat</h2>")
+                gr.Markdown("<h2>Saving</h2>")
+                gr.Markdown("<h3>2. Save Chat</h3>")
                 gr.Markdown(
                 """
-                1. **Enter your Prolific ID** in the input field
-                2. **Select the Task** you worked on
-                3. **Generate** the Chat History File
-                4. **Click on Download** to save the file
-                4. **Upload the downloaded file** to the survey platform for the corresponding task
+                2.1 **Enter your Prolific ID** in the input field
+                2.2 **Select the Task** you worked on
+                2.3 **Generate** the Chat History File
+                2.4 **Click on Download** to save the file
+                2.5 **Upload the downloaded file** to the survey platform for the corresponding task
                 """
                 )
                 # Inputs
