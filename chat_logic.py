@@ -6,6 +6,8 @@ openai.api_key = OPENAI_API_KEY
 
 def chatbot_response(user_input, chat_history):
     # Function for processing user input
+
+    #Error handling
     if user_input in FORBIDDEN_PROMPTS:
         return chat_history, "<div style='color:red;'>Nice try, you shouldn't copy and paste the task.</div>", ""
 
