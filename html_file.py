@@ -1,26 +1,22 @@
 import os
 import gradio as gr
 from config import MODEL_NAME
+import markdown
 
 def generate_chat_file(prolific_id, task_type, chat_history):
      # Display error if entries are missing
-    if not prolific_id and not task_type:
-        return None, gr.update(
-        value="<div style='background-color: #fdecea; color: #d93025; border: 1px solid #f5c2c7; border-radius: 8px; padding: 10px;'>Error: Please provide both Prolific ID and Task Type before downloading the chat history</div>",
-        visible=True
-    ), gr.update(visible=False)
-    elif not prolific_id:
+    if not prolific_id:
         return None, gr.update(
             value="<div style='background-color: #fdecea; color: #d93025; border: 1px solid #f5c2c7; border-radius: 8px; padding: 10px;'>Error: Please provide Prolific ID before downloading the chat history</div>",
             visible=True
         ), gr.update(visible=False)
-    elif not task_type:
+    elif not chat_history:
         return None, gr.update(
-            value="<div style='background-color: #fdecea; color: #d93025; border: 1px solid #f5c2c7; border-radius: 8px; padding: 10px;'>Error: Please provide Task Type before downloading the chat history</div>",
+            value="<div style='background-color: #fdecea; color: #d93025; border: 1px solid #f5c2c7; border-radius: 8px; padding: 10px;'>Error: A file can only be generated after completing the task through the chat interface. Please interact with the assistant before generating a file</div>",
             visible=True
         ), gr.update(visible=False)
 
-    filename = f"{prolific_id}_task{task_type.replace(' ', '').lower()}.html"
+    filename = f"{task_type}_{prolific_id}.html"
 
    # Generate HTML content including layout
     html_content = f"""
@@ -70,23 +66,28 @@ def generate_chat_file(prolific_id, task_type, chat_history):
                 padding: 15px;
                 border-radius: 8px;
                 max-width: 80%;
+                width: fit-content;
                 font-size: 16px;
                 line-height: 1.5;
                 white-space: pre-wrap;
                 display: flex;
                 flex-direction: column;
+                margin: 10px 0;
+                height: auto;
             }}
             .user {{
                 align-self: flex-end;
                 background-color: #ff9800;
                 color: black;
                 text-align: right;
+                margin-left: auto;
             }}
             .assistant {{
                 align-self: flex-start;
                 background-color: #d6d6d6;
                 color: black;
                 text-align: left;
+                margin-right: auto;
             }}
             .role {{
                 font-weight: bold;
@@ -107,28 +108,27 @@ def generate_chat_file(prolific_id, task_type, chat_history):
             <div class="info">
                 <p>Prolific ID: {prolific_id} | Task: {task_type} | Model: {MODEL_NAME}</p>
             </div>
-            <div class="chat">
     """
 
     # Add messages
     for message in chat_history:
-        if message["role"] == "user":
-            html_content += f"""
-            <div class="message user">
-                <div class="role">User:</div>
-                <div>{message['content']}</div>
-            </div>
-            """
-        elif message["role"] == "assistant":
-            html_content += f"""
-            <div class="message assistant">
-                <div class="role">{MODEL_NAME}:</div>
-                <div>{message['content']}</div>
-            </div>
-            """
+        role_class = "user" if message["role"] == "user" else "assistant"
+        role_name = "User" if message["role"] == "user" else "Assistant"
 
+        # Markdown content
+        rendered_content = markdown.markdown(message['content'])
+        
+        # Add rendered message
+        html_content += f"""
+        <div class="message {role_class}">
+            <strong>{role_name}:</strong>
+            {rendered_content}
+        </div>
+        """
+
+
+    # Closing of html file
     html_content += """
-            </div>
         </div>
     </body>
     </html>
