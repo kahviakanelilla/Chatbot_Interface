@@ -1,37 +1,51 @@
-import openai
-from config import MODEL_NAME, FORBIDDEN_PROMPTS, OPENAI_API_KEY
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from config import MODEL_NAME, FORBIDDEN_PROMPTS
 
-# Set key
-openai.api_key = OPENAI_API_KEY
+print(f"Loading model {MODEL_NAME} locally...")
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+
+# device_map="cpu" is safer for free tiers to avoid CUDA errors
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL_NAME, 
+    device_map="cpu", 
+    torch_dtype="auto"
+)
 
 def chatbot_response(user_input, chat_history):
-    # Function for processing user input
-
-    #Error handling
+    """
+    Local inference logic similar to your old code.
+    No API calls, everything happens inside the Space.
+    """
+    if not user_input.strip():
+        return chat_history, "", ""
+    
     if user_input in FORBIDDEN_PROMPTS:
-        return chat_history, "<div style='color:red;'>Nice try, you shouldn't copy and paste the task.</div>", ""
+        return chat_history, "Unauthorized prompt.", ""
 
-    if not user_input.strip():  # empty prompt
-        return chat_history, "<div style='color:red;'>Error: Prompt cannot be empty.</div>", ""
-
-    # OpenAI API call
     try:
-        response = openai.ChatCompletion.create(
-            model=MODEL_NAME,
-            messages=chat_history + [{"role": "user", "content": user_input}]
-        )
+        # Reconstruct chat history into a single string
+        prompt = ""
+        for turn in chat_history:
+            role = "user" if turn["role"] == "user" else "assistant"
+            prompt += f"<|{role}|>\n{turn['content']}<|end|>\n"
+        prompt += f"<|user|>\n{user_input}<|end|>\n<|assistant|>\n"
 
-        # Extract the assistant's reply
-        assistant_response = response['choices'][0]['message']['content']
+        # Tokenize and Generate
+        inputs = tokenizer(prompt, return_tensors="pt")
+        outputs = model.generate(**inputs, max_new_tokens=256)
+        
+        # Decode the response
+        full_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Extract only the last assistant part
+        answer = full_text.split("<|assistant|>")[-1].strip()
 
-        # Update chat history
+        # Update History
         chat_history.append({"role": "user", "content": user_input})
-        chat_history.append({"role": "assistant", "content": assistant_response})
+        chat_history.append({"role": "assistant", "content": answer})
+        
+        return chat_history, "", ""
 
-        return chat_history, None, ""  # Return updated history, no error, and empty user input
-    except openai.error.OpenAIError as e:
-        return (
-            chat_history,
-            f"<div style='color:red;'>Error: {str(e)}</div>",
-            ""
-        )
+    except Exception as e:
+        print(f"Local Error: {str(e)}")
+        return chat_history, f"Local Error: {str(e)}", ""
